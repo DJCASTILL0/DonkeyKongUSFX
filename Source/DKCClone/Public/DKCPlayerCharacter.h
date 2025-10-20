@@ -3,8 +3,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Strategies/PlayerStrategy.h"
 #include "DKCPlayerCharacter.generated.h"
-
 // Forward declaration para no tener que incluir los headers aquí
 class UCameraComponent;
 class USpringArmComponent;
@@ -22,7 +22,6 @@ class DKCCLONE_API ADKCPlayerCharacter : public ACharacter
 
 
 public:
-	// Sets default values for this character's properties
 	ADKCPlayerCharacter();
 	void SwitchState(UPlayerBaseState* NewState);
 
@@ -30,13 +29,10 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	UCameraComponent* FollowCamera;
-
-	/** Camera boom positioning the camera beside the character */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	USpringArmComponent* CameraBoom;
-	//paso 14
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
-	UHealthComponent* HealthComponent; // <-- AÑADE ESTA LÍNEA
+	UHealthComponent* HealthComponent;
 	UPROPERTY()
 	UPlayerBaseState* CurrentState;
 	
@@ -53,8 +49,8 @@ protected:
 	virtual void BeginPlay() override;
 	void MoveRight(float Value);
 
-	void JumpPressed(); //<- añade erta linea paso 11
-	void RollPressed(); // <-- AÑADE ESTA LÍNEA paso 12
+	void JumpPressed();
+	void RollPressed(); 
 	UFUNCTION()
 	void OnPlayerHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 
@@ -77,6 +73,12 @@ protected:
 	void OnEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 	void MoveUp(float Value);  //<--- paso 23 liana
 
+	UPROPERTY()
+	UPlayerStrategy* CurrentStrategy;
+
+	void SetStrategy(TSubclassOf<UPlayerStrategy> NewStrategyClass);
+
+	void SwitchCharacter(); 
 
 public:	
 	virtual void Tick(float DeltaTime) override;

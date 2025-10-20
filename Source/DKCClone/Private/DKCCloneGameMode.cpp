@@ -1,18 +1,12 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
 #include "DKCCloneGameMode.h"
 #include "DKCPlayerCharacter.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Enemies/EnemyBase.h"
-#include "Kismet/GameplayStatics.h" // Necesario para OpenLevel
-#include "TimerManager.h" // Necesario para los Timers
+#include "Kismet/GameplayStatics.h" 
+#include "TimerManager.h" 
 ADKCCloneGameMode::ADKCCloneGameMode()
 {
-	// set default pawn class to our Blueprinted character
-	/*static ConstructorHelpers::FClassFinder<APawn> PlayerPawnBPClass(TEXT("/Game/SideScrollerCPP/Blueprints/SideScrollerCharacter"));
-	if (PlayerPawnBPClass.Class != nullptr)
-	{
-		DefaultPawnClass = PlayerPawnBPClass.Class;
-	} --> no lo usamso porque ya tenemos DKCPlayerCharacter*/ 
+	
 }
 
 void ADKCCloneGameMode::AddEnemyToArray(AEnemyBase* EnemyToAdd)

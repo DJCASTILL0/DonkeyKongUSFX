@@ -1,13 +1,8 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "Interactables/BarrelBase.h"
 #include "Enemies/EnemyBase.h"
 #include "Components/HealthComponent.h"
-// Sets default values
 ABarrelBase::ABarrelBase()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 	BarrelMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BarrelMesh"));
 	RootComponent = BarrelMesh;
@@ -25,14 +20,12 @@ ABarrelBase::ABarrelBase()
 
 }
 
-// Called when the game starts or when spawned
 void ABarrelBase::BeginPlay()
 {
 	Super::BeginPlay();
 	
 }
 
-// Called every frame
 void ABarrelBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);

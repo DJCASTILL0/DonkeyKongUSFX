@@ -2,8 +2,8 @@
 #include "Components/StaticMeshComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "UObject/ConstructorHelpers.h"
-#include "DKCPlayerCharacter.h" // Necesitamos saber qué es el jugador
-#include "Components/HealthComponent.h" // Y su componente de vida
+#include "DKCPlayerCharacter.h" 
+#include "Components/HealthComponent.h" 
 
 AProjectileBase::AProjectileBase()
 {
@@ -61,7 +61,5 @@ void AProjectileBase::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActo
 			PlayerHealth->TakeDamage(1.f);
 		}
 	}
-
-	// Después de chocar con CUALQUIER cosa, el proyectil se destruye.
 	Destroy();
 }

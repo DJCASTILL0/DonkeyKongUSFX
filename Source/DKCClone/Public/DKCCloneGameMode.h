@@ -7,7 +7,7 @@
 #include "DKCCloneGameMode.generated.h"
 
 class AEnemyBase;
-class ACharacter; // <-- Añadimos esta declaración para que reconozca ACharacter
+class ACharacter; 
 
 UCLASS(minimalapi)
 class ADKCCloneGameMode : public AGameModeBase
@@ -25,7 +25,6 @@ public:
 	void AddEnemyToArray(AEnemyBase* EnemyToAdd);
 	void RemoveEnemyFromArray(AEnemyBase* EnemyToRemove);
 
-	// --- CÓDIGO AÑADIDO ---
 	// Función pública que el jugador llamará al morir.
 	void PlayerDied(ACharacter* DeadCharacter);
 
@@ -35,5 +34,4 @@ private:
 
 	// Temporizador para controlar el reinicio.
 	FTimerHandle RestartTimerHandle;
-	// --- FIN DEL CÓDIGO AÑADIDO ---
 };

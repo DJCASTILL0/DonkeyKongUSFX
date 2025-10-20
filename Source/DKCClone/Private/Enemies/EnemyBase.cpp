@@ -5,10 +5,8 @@
 #include "Components/HealthComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
-// Sets default values
 AEnemyBase::AEnemyBase()
 {
- 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	// Hacemos la cápsula de colisión del enemigo un poco más pequeña que la del jugador
 	GetCapsuleComponent()->SetCapsuleHalfHeight(60.f);
@@ -34,8 +32,6 @@ AEnemyBase::AEnemyBase()
 
 }
 
-
-// Called when the game starts or when spawned
 void AEnemyBase::BeginPlay()
 {
 	Super::BeginPlay();
@@ -57,7 +53,6 @@ void AEnemyBase::Tick(float DeltaTime)
 	AddMovementInput(MovementDirection);
 }
 
-// Called to bind functionality to input
 void AEnemyBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);

@@ -1,6 +1,3 @@
-
-// Private/PlayerStates/JumpingState.cpp
-
 #include "PlayerStates/JumpingState.h"
 #include "PlayerStates/IdleState.h"
 #include "PlayerStates/AirRollState.h" 

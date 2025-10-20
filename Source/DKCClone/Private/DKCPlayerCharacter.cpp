@@ -1,6 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "DKCPlayerCharacter.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Camera/CameraComponent.h"
@@ -9,18 +6,23 @@
 #include "PlayerStates/PlayerBaseState.h"
 #include "PlayerStates/IdleState.h"
 #include "Components/HealthComponent.h" 
-#include "Components/CapsuleComponent.h" // <-- Asegúrate de tener este include
+#include "Components/CapsuleComponent.h" 
 #include "Enemies/EnemyBase.h"
 #include "Blueprint/UserWidget.h"
 #include "Interactables/BarrelBase.h"
 #include "Interactables/VineActor.h"
-#include "PlayerStates/ClimbingState.h" // <-- AÑADE ESTE INCLUDE pas 23
+#include "PlayerStates/ClimbingState.h" 
 #include "Components/InventoryComponent.h" 
 #include "DKCCloneGameMode.h"
 #include "Kismet/GameplayStatics.h"
+#include "Strategies/PlayerStrategy.h"
+#include "Strategies/DonkeyKongStrategy.h"
+#include "Strategies/DiddyKongStrategy.h"
+#include "AnimalBuddies/RambiCharacter.h"
+#include "Enemies/ArmyCharacter.h"
+#include "PlayerStates/GroundRollState.h" 
+#include "PlayerStates/AirRollState.h"
 
-// Sets default values
-// Constructor de la clase
 ADKCPlayerCharacter::ADKCPlayerCharacter()
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -76,7 +78,7 @@ ADKCPlayerCharacter::ADKCPlayerCharacter()
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // La enganchamos al final del "palo selfie"
 	FollowCamera->bUsePawnControlRotation = false; // La cámara no rota con el "palo selfie", así se mantiene estable
-	//paso 14
+
 	HealthComponent = CreateDefaultSubobject<UHealthComponent>(TEXT("HealthComponent"));
 	GetCapsuleComponent()->OnComponentHit.AddDynamic(this, &ADKCPlayerCharacter::OnPlayerHit);
 
@@ -85,10 +87,10 @@ ADKCPlayerCharacter::ADKCPlayerCharacter()
 	GetCapsuleComponent()->OnComponentEndOverlap.AddDynamic(this, &ADKCPlayerCharacter::OnEndOverlap);
 	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
 
-
+	CurrentStrategy = CreateDefaultSubobject<UDonkeyKongStrategy>(TEXT("DefaultStrategy"));
 }
 
-// Called when the game starts or when spawned
+
 void ADKCPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
@@ -119,9 +121,14 @@ void ADKCPlayerCharacter::BeginPlay()
 		HealthComponent->OnDeath.AddDynamic(this, &ADKCPlayerCharacter::OnPlayerDeath);
 	}
 
+	if (CurrentStrategy)
+	{
+		CurrentStrategy->SetPlayerCharacter(this);
+		CurrentStrategy->AdjustMovementParameters();
+	}
 }
 
-// Called every frame
+
 void ADKCPlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -134,23 +141,16 @@ void ADKCPlayerCharacter::Tick(float DeltaTime)
 
 }
 
-// DKCPlayerCharacter.cpp
-
 void ADKCPlayerCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
 {
-	// Llama a la función del padre primero
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
-	// "Bindea" o conecta la acción "Jump" (definida en Project Settings -> Input)
-	// Cuando se presiona, llama a la función Jump() que ya existe en la clase ACharacter
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ADKCPlayerCharacter::JumpPressed);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
 	PlayerInputComponent->BindAction("Roll", IE_Pressed, this, &ADKCPlayerCharacter::RollPressed);
 	PlayerInputComponent->BindAction("Interact", IE_Pressed, this, &ADKCPlayerCharacter::Interact);
-	// "Bindea" el eje "MoveRight" (definido en Project Settings -> Input)
-	// Llama a nuestra función MoveRight en cada frame que se esté presionando la tecla
 	PlayerInputComponent->BindAxis("MoveRight", this, &ADKCPlayerCharacter::MoveRight);
 	PlayerInputComponent->BindAxis("MoveUp", this, &ADKCPlayerCharacter::MoveUp);
+	PlayerInputComponent->BindAction("SwitchCharacter", IE_Pressed, this, &ADKCPlayerCharacter::SwitchCharacter);
 
 }
 
@@ -182,7 +182,6 @@ void ADKCPlayerCharacter::SwitchState(UPlayerBaseState* NewState)
 	}
 }
 
-// AÑADE ESTA FUNCIÓN paso 11
 void ADKCPlayerCharacter::JumpPressed()
 {
 	if (CurrentState)
@@ -191,11 +190,11 @@ void ADKCPlayerCharacter::JumpPressed()
 	}
 }
 
-void ADKCPlayerCharacter::RollPressed() // <-- AÑADE ESTA FUNCIÓN paso 12
+void ADKCPlayerCharacter::RollPressed() 
 {
 	if (CurrentState)
 	{
-		CurrentState->HandleRollInput();
+		CurrentStrategy->ExecuteRoll(); //delegamos al patron strategia
 	}
 }
 
@@ -207,21 +206,33 @@ void ADKCPlayerCharacter::OnPlayerHit(UPrimitiveComponent* HitComponent, AActor*
 		// Si estamos cayendo (es un pisotón)...
 		if (GetVelocity().Z < 0)
 		{
-			UHealthComponent* EnemyHealth = Enemy->HealthComponent;
-			if (EnemyHealth)
-			{
-				EnemyHealth->TakeDamage(1.0f);
-			}
+			// Damos el rebote al jugador.
 			LaunchCharacter(FVector(0.f, 0.f, 600.f), false, false);
+
+			// --- LÓGICA MODIFICADA ---
+			// Primero, intentamos ver si el enemigo es un Army.
+			AArmyCharacter* Army = Cast<AArmyCharacter>(Enemy);
+			if (Army)
+			{
+				// Si es un Army, lo convertimos en caparazón.
+				Army->EnterShellState();
+			}
+			else
+			{
+				// Si no es un Army, le hacemos daño como siempre.
+				UHealthComponent* EnemyHealth = Enemy->HealthComponent;
+				if (EnemyHealth)
+				{
+					EnemyHealth->TakeDamage(3.0f);
+				}
+			}
 		}
-		// Si no estamos cayendo (es un choque lateral)...
-		else
+		else // Choque lateral
 		{
 			if (HealthComponent)
 			{
 				HealthComponent->TakeDamage(1.0f);
 			}
-			
 		}
 	}
 }
@@ -229,9 +240,7 @@ void ADKCPlayerCharacter::OnPlayerHit(UPrimitiveComponent* HitComponent, AActor*
 void ADKCPlayerCharacter::Interact()
 {
 	// Si ya estamos sosteniendo algo, lo soltamos. y hace daño
-	// Bloque "if" de la función Interact()
-// Bloque "if" de la función Interact()
-	// Bloque "if" de la función Interact()
+	
 	if (HeldObject)
 	{
 		// 1. Lo separamos del personaje.
@@ -240,15 +249,13 @@ void ADKCPlayerCharacter::Interact()
 		HeldObject->BarrelMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		HeldObject->BarrelMesh->SetSimulatePhysics(true);
 
-		// 4. --- LÓGICA SÚPER ROBUSTA ---
-		// Obtenemos la dirección en la que el personaje está orientado.
+		// 4. Obtenemos la dirección en la que el personaje está orientado.
 		// Esto siempre será perfectamente a la derecha (Y=1) o a la izquierda (Y=-1).
 		const FVector CharacterDirection = GetMesh()->GetRightVector();
 		const float ThrowStrength = 2500.f;
 
 		// 5. Aplicamos el impulso usando esta dirección pura.
 		HeldObject->BarrelMesh->AddImpulse(CharacterDirection * ThrowStrength * HeldObject->BarrelMesh->GetMass());
-		// --- FIN DE LÓGICA SÚPER ROBUSTA ---
 
 		// 6. Rompemos nuestro vínculo con el objeto.
 		HeldObject = nullptr;
@@ -288,18 +295,51 @@ void ADKCPlayerCharacter::Interact()
 
 void ADKCPlayerCharacter::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+	// --- LÓGICA DE DEPURACIÓN ---
+	if (CurrentState)
+	{
+		// Imprimimos el nombre del estado actual para saber en qué estado estamos al chocar.
+		UE_LOG(LogTemp, Warning, TEXT("Overlap detectado. Estado actual: %s"), *CurrentState->GetName());
+	}
+
+	// ¿Estamos en un estado de roll?
+	if (CurrentState && (CurrentState->IsA<UGroundRollState>() || CurrentState->IsA<UAirRollState>()))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("CONDICIÓN DE ROLL CUMPLIDA."));
+
+		AEnemyBase* Enemy = Cast<AEnemyBase>(OtherActor);
+		if (Enemy)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("OVERLAP CON ENEMIGO MIENTRAS SE RUEDA. Aplicando daño..."));
+
+			UHealthComponent* EnemyHealth = Enemy->HealthComponent;
+			if (EnemyHealth)
+			{
+				EnemyHealth->TakeDamage(3.0f);
+			}
+			return;
+		}
+	}
+
+	// --- LÓGICA ANTERIOR (LIANAS Y RAMBI) ---
 	AVineActor* Vine = Cast<AVineActor>(OtherActor);
 	if (Vine)
 	{
 		bIsOverlappingVine = true;
 		OverlappingVine = Vine;
 		UE_LOG(LogTemp, Warning, TEXT("OVERLAP CON LIANA INICIADO"));
-		// --- AÑADE ESTA LÓGICA ---
-		// Si estamos cayendo, nos agarramos a la liana.  <-- paso 23
+
 		if (GetCharacterMovement()->IsFalling())
 		{
 			SwitchState(NewObject<UClimbingState>());
 		}
+		return;
+	}
+
+	ARambiCharacter* Rambi = Cast<ARambiCharacter>(OtherActor);
+	if (Rambi)
+	{
+		Rambi->Mount(this);
 	}
 }
 
@@ -334,5 +374,34 @@ void ADKCPlayerCharacter::OnPlayerDeath()
 	if (GameMode)
 	{
 		GameMode->PlayerDied(this);
+	}
+}
+
+void ADKCPlayerCharacter::SetStrategy(TSubclassOf<UPlayerStrategy> NewStrategyClass)
+{
+	if (NewStrategyClass)
+	{
+		CurrentStrategy = NewObject<UPlayerStrategy>(this, NewStrategyClass);
+		if (CurrentStrategy)
+		{
+			CurrentStrategy->SetPlayerCharacter(this);
+			CurrentStrategy->AdjustMovementParameters();
+			UE_LOG(LogTemp, Warning, TEXT("Strategy Changed to: %s"), *CurrentStrategy->GetName());
+		}
+	}
+}
+
+void ADKCPlayerCharacter::SwitchCharacter()
+{
+	// Si la estrategia actual es la de DK, cambiamos a Diddy, y viceversa.
+	if (CurrentStrategy->IsA<UDonkeyKongStrategy>())
+	{
+		SetStrategy(UDiddyKongStrategy::StaticClass());
+		
+	}
+	else
+	{
+		SetStrategy(UDonkeyKongStrategy::StaticClass());
+		
 	}
 }

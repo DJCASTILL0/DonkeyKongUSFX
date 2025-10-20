@@ -2,6 +2,7 @@
 #include "PlayerStates/IdleState.h"
 #include "DKCPlayerCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Components/CapsuleComponent.h"
 
 void UAirRollState::OnEnter(ADKCPlayerCharacter* Player)
 {
@@ -10,10 +11,7 @@ void UAirRollState::OnEnter(ADKCPlayerCharacter* Player)
 
     if (PlayerCharacter)
     {
-        // Opcional: Podríamos añadir un pequeño impulso hacia adelante aquí
-        // PlayerCharacter->LaunchCharacter(PlayerCharacter->GetActorForwardVector() * 500.f, false, false);
-
-        // TODO: En el futuro, aquí cambiaremos la animación a la de rodar.
+        PlayerCharacter->GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
     }
 }
 
@@ -29,4 +27,9 @@ void UAirRollState::TickState(float DeltaTime)
 void UAirRollState::OnExit()
 {
     UE_LOG(LogTemp, Warning, TEXT("Exiting Air Roll State"));
+
+    if (PlayerCharacter)
+    {
+        PlayerCharacter->GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Block);
+    }
 }

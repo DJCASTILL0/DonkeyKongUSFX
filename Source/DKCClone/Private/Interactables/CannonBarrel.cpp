@@ -34,14 +34,12 @@ ACannonBarrel::ACannonBarrel()
 	LaunchVelocity = FVector(1500.f, 0.f, 1000.f);
 }
 
-// Called when the game starts or when spawned
 void ACannonBarrel::BeginPlay()
 {
 	Super::BeginPlay();
 	
 }
 
-// Called every frame
 void ACannonBarrel::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);

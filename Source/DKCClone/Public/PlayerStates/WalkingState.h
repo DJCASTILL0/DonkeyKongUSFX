@@ -1,5 +1,3 @@
-// Public/PlayerStates/WalkingState.h
-
 #pragma once
 
 #include "CoreMinimal.h"

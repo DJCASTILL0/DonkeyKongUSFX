@@ -10,10 +10,8 @@ void AEnemy_Necky::BeginPlay()
 	// Llamará a la función 'Fire' cada 2.0 segundos, y se repetirá.
 	GetWorld()->GetTimerManager().SetTimer(FireTimerHandle, this, &AEnemy_Necky::Fire, 2.0f, true);
 
-	// --- AÑADE ESTAS LÍNEAS ---
 	// Inicia el temporizador de giro (cada 4 segundos)
 	GetWorld()->GetTimerManager().SetTimer(TurnTimerHandle, this, &AEnemy_Necky::Turn, 4.0f, true);
-	// --- FIN ---
 
 }
 
