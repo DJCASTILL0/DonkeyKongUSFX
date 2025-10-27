@@ -79,7 +79,7 @@ protected:
 	void SetStrategy(TSubclassOf<UPlayerStrategy> NewStrategyClass);
 
 	void SwitchCharacter(); 
-
+	virtual void OnMovementModeChanged(EMovementMode PrevMovementMode, uint8 PreviousCustomMode = 0) override;
 public:	
 	virtual void Tick(float DeltaTime) override;
 

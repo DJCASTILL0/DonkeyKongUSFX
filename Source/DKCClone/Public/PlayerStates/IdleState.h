@@ -1,3 +1,4 @@
+#pragma once
 #include "CoreMinimal.h"
 #include "PlayerStates/PlayerBaseState.h"
 #include "IdleState.generated.h"

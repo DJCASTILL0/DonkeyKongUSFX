@@ -23,6 +23,7 @@ public:
 	virtual void HandleJumpInput(); // <-- AÑADE ESTA LÍNEA paso 11
 	virtual void HandleRollInput(); // <-- AÑADE ESTA LÍNEA paso 12
 	virtual void HandleMoveUpInput(float Value); // <-- AÑADE ESTA LÍNEA paso 23 la liana
+	virtual void HandleMoveRightInput(float Value);
 	// Funciones virtuales puras. Obligan a las clases hijas a implementarlas.
 	// Usamos la macro PURE_VIRTUAL de Unreal.
 

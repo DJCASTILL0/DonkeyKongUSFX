@@ -21,3 +21,7 @@ void UPlayerBaseState::HandleMoveUpInput(float Value)
 {
 
 }
+void UPlayerBaseState::HandleMoveRightInput(float Value)
+{
+    // Por defecto, los estados ignoran este input.
+}

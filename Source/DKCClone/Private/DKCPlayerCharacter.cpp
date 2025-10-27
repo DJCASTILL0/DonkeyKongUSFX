@@ -1,6 +1,7 @@
 #include "DKCPlayerCharacter.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Camera/CameraComponent.h"
+#include "PlayerStates/SwimmingState.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "PlayerStates/PlayerBaseState.h"
@@ -22,6 +23,8 @@
 #include "Enemies/ArmyCharacter.h"
 #include "PlayerStates/GroundRollState.h" 
 #include "PlayerStates/AirRollState.h"
+#include "AnimalBuddies/EnguardeCharacter.h"
+
 
 ADKCPlayerCharacter::ADKCPlayerCharacter()
 {
@@ -335,7 +338,17 @@ void ADKCPlayerCharacter::OnBeginOverlap(UPrimitiveComponent* OverlappedComponen
 		}
 		return;
 	}
-
+	//si estamos en modo de nadar
+	if (CurrentState && CurrentState->IsA<USwimmingState>())
+	{
+		// ...comprobamos si es Enguarde.
+		AEnguardeCharacter* Enguarde = Cast<AEnguardeCharacter>(OtherActor);
+		if (Enguarde)
+		{
+			Enguarde->Montar(this);
+			return;
+		}
+	}
 	ARambiCharacter* Rambi = Cast<ARambiCharacter>(OtherActor);
 	if (Rambi)
 	{
@@ -403,5 +416,27 @@ void ADKCPlayerCharacter::SwitchCharacter()
 	{
 		SetStrategy(UDonkeyKongStrategy::StaticClass());
 		
+	}
+}
+
+void ADKCPlayerCharacter::OnMovementModeChanged(EMovementMode PrevMovementMode, uint8 PreviousCustomMode)
+{
+	Super::OnMovementModeChanged(PrevMovementMode, PreviousCustomMode);
+
+	// Si el nuevo modo de movimiento es Nadar...
+	if (GetCharacterMovement()->MovementMode == EMovementMode::MOVE_Swimming)
+	{
+		// ...y no estamos ya en el estado de nadar...
+		if (!CurrentState->IsA<USwimmingState>())
+		{
+			// ...entramos en el estado de nadar.
+			SwitchState(NewObject<USwimmingState>());
+		}
+	}
+	// Si el modo anterior era Nadar (es decir, acabamos de salir del agua)...
+	else if (PrevMovementMode == EMovementMode::MOVE_Swimming)
+	{
+		// ...volvemos al estado de reposo para que la lógica normal se reanude.
+		SwitchState(NewObject<UIdleState>());
 	}
 }
